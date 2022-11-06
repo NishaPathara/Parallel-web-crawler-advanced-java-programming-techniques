@@ -1,0 +1,117 @@
+Written Questions
+
+Q1. Run the web crawler using the configurations located at src/main/config/written_question_1a.json and
+    src/main/config/written_question_1b.json. The only difference between these configurations is that one always uses
+    the sequential crawler and the other always uses the parallel crawler. Inspect the profile output in
+    profileData.txt.
+
+    If you are using a multi-processor computer, you should notice that SequentialWebCrawler#crawl and
+    ParallelWebCrawler#crawl took about the same amount of time, but PageParserImpl#parse took much longer when run with
+    the ParallelWebCrawler.
+
+    Why did the parser take more time when run with ParallelWebCrawler?
+
+
+Answer:-
+--------
+Result with src/main/config/written_question_1a.json(sequential web crawler):-
+
+{"wordCounts":{"data":286,"learning":267,"udacity":217,"with":169,"machine":146},"urlsVisited":15}
+com.udacity.webcrawler.SequentialWebCrawler#crawl took 0m 7s 67ms
+com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 7s 34ms
+
+Result with src/main/config/written_question_1b.json(Parallel web crawler):-
+{"wordCounts":{"udacity":1950,"data":1940,"with":1402,"your":1227,"learning":1178},"urlsVisited":165}
+com.udacity.webcrawler.ParallelWebCrawler#crawl took 0m 7s 728ms
+com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 49s 776ms
+
+Since parallel web crawler executes in multiple threads,it parses through more urls compared to sequential web crawler,
+so the time taken by parser is calculated as an aggregated amount of time taken by all threads to parse through the urls.
+here sequential web crawler parsed through only 15 urls where is parallel web crawler parsed through 165 urls,thats why it 
+shows it took more time for the parsing.
+
+
+Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
+    the sequential crawler actually outperforms the parallel crawler. She would like to know why.
+
+    (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
+        (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
+
+    (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
+        crawler. Why will it perform better?
+
+Answer:-
+--------
+(a)
+parallel web crawler with parallelism set to 1
+-------------------------------------------------
+{
+  "startPages": ["https://www.udacity.com/"],
+  "ignoredWords": ["^.{1,3}$"],
+  "parallelism": 1,
+  "implementationOverride": "com.udacity.webcrawler.ParallelWebCrawler",
+  "maxDepth": 10,
+  "timeoutSeconds": 7,
+  "popularWordCount": 5,
+  "profileOutputPath": "profileData.txt"
+}
+
+result:-
+{"wordCounts":{"data":364,"learning":308,"udacity":281,"with":212,"learn":163},"urlsVisited":19}
+com.udacity.webcrawler.ParallelWebCrawler#crawl took 0m 7s 498ms
+com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 7s 451ms
+
+sequential web crawler
+------------------------
+{
+  "startPages": ["https://www.udacity.com/"],
+  "ignoredWords": ["^.{1,3}$"],
+  "implementationOverride": "com.udacity.webcrawler.SequentialWebCrawler",
+  "maxDepth": 10,
+  "timeoutSeconds": 7,
+  "popularWordCount": 5,
+  "profileOutputPath": "profileData.txt"
+}
+
+result:-
+{"wordCounts":{"data":400,"learning":312,"udacity":296,"with":221,"learn":166},"urlsVisited":21}
+com.udacity.webcrawler.SequentialWebCrawler#crawl took 0m 7s 138ms
+com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 7s 107ms
+
+Here it is clear that sequential web crawler parsed through more urls compared to parallel web crawler(which set to parallelism 1)
+it is expensive to run a parallel web crawler program on a system which doesnt support multithreads and parallelism since it uses more
+resources,so when the program uses forkjoin pool framework to create and submit recursivetask to the system it overhead the system.
+
+(b)
+parallel webcrawler can outperform when it runs On a system with multicore,so that it can utilize multithreads. 
+
+Q3. Analyze your method profiler through the lens of Aspect Oriented Programming, by answering the following questions:
+
+    (a) What cross-cutting concern is being addressed by the com.udacity.webcrawler.profiler.Profiler class?
+
+    (b) What are the join points of the Profiler in the web crawler program?
+
+Answer:-
+---------
+(a)logging the performance data is a cross cutting concern addressed in profiler class which affects the entire application 
+(b)join points here are the profiled methods for which the interceptor does logging the time taken for the methodcalls
+
+Q4. Identify three (3) different design patterns used in this project, and explain which interfaces, classes, and/or
+    libraries use or implement those design patterns.
+
+    For each pattern, name one thing about the pattern that you LIKED, and one thing you DISLIKED. If you did not like
+    anything, you can name two things you disliked.
+
+Answer:-
+-------
+(1)Aspect oriented programming:-profiler classes
+I like:-using of resuable independant module(eg:- logging)which is easier to modify in future without affecting the main logic 
+I dislike:-additional method classes needed ,so additional code flows will make debugging difficult in case of testng
+(2)Dependency injection:-using guice module in profiler
+I like:-making classes more modular hence single responsibility for classes
+I dislike:-more difficult to understand the code,additional work of adding dependencies
+(3)Builder pattern-Crawler configuration
+I like:-making object step by step
+I dislike:-more coding
+
+
